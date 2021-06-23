@@ -63,4 +63,39 @@ app.post("/sign-in", async (req, res) => {
         return res.sendStatus(500);
     }
 });
+app.post('/transactions', async (req,res) => {
+    try{
+        const authorization = req.headers['authorization'];
+        const {type, amount, description} = req.body;
+        const token = authorization.replace('Bearer ', '');
+        if (!authorization || !token){
+            return res.sendStatus(403);
+        }
+        const {rows: user} = await connection.query(`
+            SELECT * FROM sessions
+            JOIN users
+            ON sessions."userId" = users.id
+            WHERE sessions.token = $1
+        `, [token]);
+        const userId = user[0].userId
+        if (type !== 0 && type!==1){
+            return res.sendStatus(400);
+        }
+        if (!userId){
+            return res.sendStatus(400);
+        }
+        if (!amount){
+            return res.sendStatus(400);
+        }
+        await connection.query(`
+                INSERT INTO transactions 
+                ("userId", amount, description, type)
+                VALUES ($1, $2, $3, $4)
+        `, [userId, amount, description, type]);
+        res.sendStatus(201);
+    }catch(e){
+        console.log(e);
+        res.sendStatus(500);
+    }
+})
 app.listen(4000, () => console.log('Server listening on port: 4000'));
