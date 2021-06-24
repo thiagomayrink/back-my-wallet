@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import connection from './database/database.js';
 import bcrypt from 'bcrypt';
-import dayjs from 'dayjs';
 import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
@@ -25,12 +24,12 @@ app.post("/sign-up", async (req, res) => {
         `,[name, email, passwordHash]);
         } else {
             return res.sendStatus(400);
-        }
+        };
         return res.sendStatus(201);
     } catch(e){
         console.log(e);
         res.sendStatus(500);
-    }
+    };
 });
 
 app.post("/sign-in", async (req, res) => {
@@ -49,20 +48,20 @@ app.post("/sign-in", async (req, res) => {
                 INSERT INTO sessions 
                 ("userId", token)
                 VALUES ($1, $2)
-            `, [user.id, token])
+            `, [user.id, token]);
         
             const data = {
                 user: {id: user.id, name: user.name, email: user.email}, 
                 token
-            }
+            };
             return res.send(data).status(200);
         } else {
             return res.sendStatus(401);
-        }
+        };
     } catch(e){
         console.log(e);
         return res.sendStatus(500);
-    }
+    };
 });
 app.post('/transactions', async (req,res) => {
     try{
@@ -71,13 +70,13 @@ app.post('/transactions', async (req,res) => {
         const token = authorization?.replace('Bearer ', '');
         if (!authorization || !token){
             return res.sendStatus(403);
-        }
+        };
         if (type !== 0 && type!==1){
             return res.sendStatus(400);
-        }
+        };
         if (!amount){
             return res.sendStatus(400);
-        }
+        };
         const {rows: user} = await connection.query(`
             SELECT * FROM sessions
             JOIN users
@@ -85,11 +84,11 @@ app.post('/transactions', async (req,res) => {
             WHERE sessions.token = $1
         `, [token]);
 
-        const userId = user[0].userId
+        const userId = user[0].userId;
         
         if (!userId){
             return res.sendStatus(400);
-        }
+        };
         await connection.query(`
                 INSERT INTO transactions 
                 ("userId", amount, description, type, date)
@@ -99,8 +98,8 @@ app.post('/transactions', async (req,res) => {
     }catch(e){
         console.log(e);
         res.sendStatus(500);
-    }
-})
+    };
+});
 app.get('/transactions', async (req,res) => {
     try{
         const authorization = req.headers['authorization'];
@@ -129,8 +128,8 @@ app.get('/transactions', async (req,res) => {
     }catch(e){
         console.log(e);
         res.sendStatus(500);
-    }
-})
+    };
+});
 app.get('/balance', async (req,res) => {
     try{
         const authorization = req.headers['authorization'];
@@ -138,31 +137,59 @@ app.get('/balance', async (req,res) => {
         if (!authorization || !token){
             return res.sendStatus(403);
         }
-
-        // const {rows: user} = await connection.query(`
-        //     SELECT * FROM sessions
-        //     JOIN users
-        //     ON sessions."userId" = users.id
-        //     WHERE sessions.token = $1
-        // `, [token]);
+        const {rows: user} = await connection.query(`
+            SELECT * FROM sessions
+            JOIN users
+            ON sessions."userId" = users.id
+            WHERE sessions.token = $1
+        `, [token]);
         
-        // const userId = user[0].userId;
-        // if (!userId){
-        //     return res.sendStatus(400);
-        // }
-        // const {rows: transactions} = await connection.query(`
-        //     SELECT * FROM transactions
-        //     WHERE "userId" = $1
-        // `, [userId]);
-        // const data = transactions.map((t)=>{
-        //     t.date = t.date.dayjs().format('DD-MM');
-        // })
-        // console.log(data)
-        const data = {balance: 5000}
+        const userId = user[0].userId;
+        if (!userId){
+            return res.sendStatus(400);
+        }
+        const {rows: transactions} = await connection.query(`
+            SELECT * FROM transactions
+            WHERE "userId" = $1
+        `, [userId]);
+
+        let balance=0;
+        for (let i = 0; i<transactions.length; i++){
+            if (transactions[i].type === 0) {
+                balance += transactions[i].amount;
+            } else if (transactions[i].type === 1) {
+                balance += -transactions[i].amount;
+            }
+        }
+        const data = {balance};
         res.send(data);
     }catch(e){
         console.log(e);
         res.sendStatus(500);
     }
-})
+});
+app.post('/sign-out', async (req,res) => {
+    try{
+        const authorization = req.headers['authorization'];
+        const token = authorization?.replace('Bearer ', '');
+        if (!authorization || !token){
+            return res.sendStatus(403);
+        }
+        const {rows: user} = await connection.query(`
+            SELECT * FROM sessions
+            JOIN users
+            ON sessions."userId" = users.id
+            WHERE sessions.token = $1
+        `, [token]);
+
+        await connection.query(`
+            DELETE FROM sessions
+            WHERE "userId" = $1
+        `, [user[0].id]);
+        res.sendStatus(200);
+    } catch(e){
+        console.log(e);
+        res.sendStatus(500);
+    };
+});
 app.listen(4000, () => console.log('Server listening on port: 4000'));
