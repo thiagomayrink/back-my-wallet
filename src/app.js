@@ -11,12 +11,14 @@ app.use(express.json());
 app.post("/sign-up", async (req, res) => {
     try {
         const { name, email, password } = req.body;
-        const {rows:users} = await connection.query(`SELECT * FROM users`);
-        if (users.some(c => c['email'] === email)){
+        const {rows:users} = await connection.query(`SELECT * FROM users WHERE email = $1`,[email]);
+
+        if (users.length > 0 ){
           return res.sendStatus(409);
         };
+
         if (name && email && password){
-            const passwordHash = bcrypt.hashSync(password, 12);
+            const passwordHash = bcrypt.hashSync(password, 10);
             await connection.query(`
             INSERT INTO users
             (name, email, password)
@@ -25,6 +27,7 @@ app.post("/sign-up", async (req, res) => {
         } else {
             return res.sendStatus(400);
         };
+
         return res.sendStatus(201);
     } catch(e){
         console.log(e.error);
@@ -40,6 +43,7 @@ app.post("/sign-in", async (req, res) => {
             SELECT * FROM users
             WHERE email = $1
         `,[email]);
+        
         const user = result.rows[0];
 
         if(user && bcrypt.compareSync(password, user.password)) {
