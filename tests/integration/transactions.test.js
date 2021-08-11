@@ -3,7 +3,7 @@ import app from '../../src/app.js';
 import supertest from 'supertest';
 import { afterAll, beforeEach } from '@jest/globals';
 
-import {login, cleanDatabase, closeConnection} from '../utils/util.js';
+import {createToken, cleanDatabase, closeConnection} from '../utils/util.js';
 
 beforeEach( async ()=>{
     await cleanDatabase();
@@ -16,17 +16,23 @@ afterAll ( async ()=>{
 
 const agent = supertest(app);
 
+const SignInbody = {
+    name: 'test',
+    email: 'test@email.com',
+    password: '123456'
+};
+
 describe("GET /transactions", () => {
 
     it("should respond with status 200 when user provides a valid token", async () => {
-        const token = await login();
+        const token = await createToken(SignInbody.name, SignInbody.email, SignInbody.password);
         
         const response = await agent.get("/transactions").set('Authorization', `Bearer ${token}`);
         expect(response.status).toBe(200);
     });
 
     it("should return to the user all his transactions", async () => {
-        const token = await login();
+        const token = await createToken(SignInbody.name, SignInbody.email, SignInbody.password);
         const body = {
             amount: 1000,
             type: 0,
@@ -67,7 +73,7 @@ describe("POST /transactions", () => {
             type: 0,
             description: "test transaction"
         }
-        const token = await login();
+        const token = await createToken(SignInbody.name, SignInbody.email, SignInbody.password);
     
         const response = await agent.post("/transactions").set('Authorization', `Bearer ${token}`).send(body);
   
@@ -88,7 +94,7 @@ describe("POST /transactions", () => {
     });
 
     it("should respond with status 400 when user provides an invalid amount", async () => {
-        const token = await login();
+        const token = await createToken(SignInbody.name, SignInbody.email, SignInbody.password);
         const body = {
             amount: '',
             type: 0,
@@ -100,7 +106,7 @@ describe("POST /transactions", () => {
     });
 
     it("should respond with status 400 when user provides an invalid type", async () => {
-        const token = await login();
+        const token = await createToken(SignInbody.name, SignInbody.email, SignInbody.password);
         const body = {
             amount: 1000,
             type: "invalid_type",
@@ -116,14 +122,14 @@ describe("POST /transactions", () => {
 describe("GET /balance", () => {
 
     it("should respond with status 200 when user provides a valid token", async () => {
-        const token = await login();
+        const token = await createToken(SignInbody.name, SignInbody.email, SignInbody.password);
 
         const response = await agent.get("/balance").set('Authorization', `Bearer ${token}`);
         expect(response.status).toBe(200);
     });
 
     it("should respond with correct balance when user provides a valid token", async () => {
-        const token = await login();
+        const token = await createToken(SignInbody.name, SignInbody.email, SignInbody.password);
         const body = {
             amount: 1000,
             type: 0,

@@ -4,8 +4,6 @@ const { Pool } = pg;
 
 const connectionString = `${process.env.NODE_ENV === "test" ? process.env.DATABASE_URL_TEST : process.env.DATABASE_URL}`;
 
-console.log(connectionString);
-
 const connection = new Pool({
   connectionString,
   ssl: {

@@ -1,12 +1,20 @@
-import supertest from 'supertest';
-import app from '../../src/app.js';
+import { v4 as uuidv4 } from 'uuid';
+
 import connection from '../../src/database/database.js';
 
-export async function login () {
-  await supertest(app).post("/sign-up").send({ name: 'teste', email: 'teste@email.com', password: '123456' });
-  const user = await supertest(app).post("/sign-in").send({ email: 'teste@email.com', password: '123456' });
-  
-  return user.body.token;
+import { createUser } from '../factories/userFactory.js';
+
+export async function createToken (name, email, password) {
+  const user = await createUser(name, email, password);
+  const token = uuidv4();
+
+  await connection.query(`
+      INSERT INTO sessions 
+      ("userId", token)
+      VALUES ($1, $2)
+  `, [user.id, token]);
+
+  return token;
 }
 
 export async function cleanDatabase() {
