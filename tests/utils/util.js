@@ -4,25 +4,28 @@ import connection from '../../src/database/database.js';
 
 import { createUser } from '../factories/userFactory.js';
 
-export async function createToken (name, email, password) {
-  const user = await createUser(name, email, password);
-  const token = uuidv4();
+export async function createToken(name, email, password) {
+    const user = await createUser(name, email, password);
+    const token = uuidv4();
 
-  await connection.query(`
+    await connection.query(
+        `
       INSERT INTO sessions 
       ("userId", token)
       VALUES ($1, $2)
-  `, [user.id, token]);
+  `,
+        [user.id, token],
+    );
 
-  return token;
+    return token;
 }
 
 export async function cleanDatabase() {
-  await connection.query(`TRUNCATE users RESTART IDENTITY`);
-  await connection.query(`TRUNCATE sessions RESTART IDENTITY`);
-  await connection.query(`TRUNCATE transactions RESTART IDENTITY`);
+    await connection.query('TRUNCATE users RESTART IDENTITY');
+    await connection.query('TRUNCATE sessions RESTART IDENTITY');
+    await connection.query('TRUNCATE transactions RESTART IDENTITY');
 }
 
 export async function closeConnection() {
-  await connection.end();
+    await connection.end();
 }
