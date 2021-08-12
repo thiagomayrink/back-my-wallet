@@ -5,6 +5,14 @@ import app from '../../src/app.js';
 
 import { createToken, cleanDatabase, closeConnection } from '../utils/util.js';
 
+const agent = supertest(app);
+
+const SignInbody = {
+    name: 'test',
+    email: 'test@email.com',
+    password: '123456',
+};
+
 beforeEach(async () => {
     await cleanDatabase();
 });
@@ -13,14 +21,6 @@ afterAll(async () => {
     await cleanDatabase();
     await closeConnection();
 });
-
-const agent = supertest(app);
-
-const SignInbody = {
-    name: 'test',
-    email: 'test@email.com',
-    password: '123456',
-};
 
 describe('GET /transactions', () => {
     it('should respond with status 200 when user provides a valid token', async () => {
@@ -42,6 +42,7 @@ describe('GET /transactions', () => {
             SignInbody.email,
             SignInbody.password,
         );
+
         const body = {
             amount: 1000,
             type: 0,
@@ -73,6 +74,7 @@ describe('GET /transactions', () => {
 
     it('should respond with status 401 when user provides an invalid token', async () => {
         const token = 'invalid_token';
+
         const response = await agent
             .get('/transactions')
             .set('Authorization', `Bearer ${token}`);
@@ -80,6 +82,7 @@ describe('GET /transactions', () => {
         expect(response.status).toBe(401);
     });
 });
+
 describe('POST /transactions', () => {
     it('should respond with status 201 when user provides a valid transaction', async () => {
         const body = {
@@ -87,6 +90,7 @@ describe('POST /transactions', () => {
             type: 0,
             description: 'test transaction',
         };
+
         const token = await createToken(
             SignInbody.name,
             SignInbody.email,
@@ -103,6 +107,7 @@ describe('POST /transactions', () => {
 
     it('should respond with status 401 when user provides an invalid token', async () => {
         const token = 'invalid_token';
+
         const body = {
             amount: 1000,
             type: 0,
@@ -123,11 +128,13 @@ describe('POST /transactions', () => {
             SignInbody.email,
             SignInbody.password,
         );
+
         const body = {
             amount: '',
             type: 0,
             description: 'test transaction',
         };
+
         const response = await agent
             .post('/transactions')
             .set('Authorization', `Bearer ${token}`)
@@ -142,11 +149,13 @@ describe('POST /transactions', () => {
             SignInbody.email,
             SignInbody.password,
         );
+
         const body = {
             amount: 1000,
             type: 'invalid_type',
             description: 'test transaction',
         };
+
         const response = await agent
             .post('/transactions')
             .set('Authorization', `Bearer ${token}`)
@@ -167,6 +176,7 @@ describe('GET /balance', () => {
         const response = await agent
             .get('/balance')
             .set('Authorization', `Bearer ${token}`);
+
         expect(response.status).toBe(200);
     });
 
@@ -176,12 +186,14 @@ describe('GET /balance', () => {
             SignInbody.email,
             SignInbody.password,
         );
-        const body = {
+
+        const depositBody = {
             amount: 1000,
             type: 0,
             description: 'test transaction',
         };
-        const body2 = {
+
+        const withdrawalBody = {
             amount: 1000,
             type: 1,
             description: 'test transaction',
@@ -190,15 +202,15 @@ describe('GET /balance', () => {
         await agent
             .post('/transactions')
             .set('Authorization', `Bearer ${token}`)
-            .send(body);
+            .send(depositBody);
         await agent
             .post('/transactions')
             .set('Authorization', `Bearer ${token}`)
-            .send(body);
+            .send(depositBody);
         await agent
             .post('/transactions')
             .set('Authorization', `Bearer ${token}`)
-            .send(body2);
+            .send(withdrawalBody);
 
         const response = await agent
             .get('/balance')
@@ -213,6 +225,7 @@ describe('GET /balance', () => {
 
     it('should respond with status 401 when user provides an invalid token', async () => {
         const token = 'invalid_token';
+
         const response = await agent
             .get('/balance')
             .set('Authorization', `Bearer ${token}`);
