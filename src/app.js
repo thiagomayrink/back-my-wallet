@@ -1,7 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcrypt';
 import connection from './database/database.js';
 import { UserController } from './controllers/UserController.js';
 
@@ -13,45 +11,7 @@ app.use(express.json());
 
 app.post('/sign-up', userController.signUp.bind(userController));
 
-app.post('/sign-in', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        const { rows: users } = await connection.query(
-            `
-            SELECT * FROM users
-            WHERE email = $1
-        `,
-            [email],
-        );
-
-        const user = users[0];
-
-        if (user && bcrypt.compareSync(password, user.password)) {
-            const token = uuidv4();
-            await connection.query(
-                `
-                INSERT INTO sessions 
-                ("userId", token)
-                VALUES ($1, $2)
-            `,
-                [user.id, token],
-            );
-
-            const data = {
-                user: { id: user.id, name: user.name, email: user.email },
-                token,
-            };
-
-            return res.send(data).status(200);
-        }
-
-        return res.sendStatus(401);
-    } catch (e) {
-        console.error(e.error);
-        return res.sendStatus(500);
-    }
-});
+app.post('/sign-in', userController.signIn.bind(userController));
 
 app.post('/transactions', async (req, res) => {
     try {
