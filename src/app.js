@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcrypt';
 import connection from './database/database.js';
 
 const app = express();
@@ -45,8 +45,6 @@ app.post('/sign-in', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        console.error('req body: ', req.body);
-
         const { rows: users } = await connection.query(
             `
             SELECT * FROM users
@@ -56,7 +54,6 @@ app.post('/sign-in', async (req, res) => {
         );
 
         const user = users[0];
-        console.error('user found: ', users);
 
         if (user && bcrypt.compareSync(password, user.password)) {
             const token = uuidv4();
@@ -69,18 +66,14 @@ app.post('/sign-in', async (req, res) => {
                 [user.id, token],
             );
 
-            console.error('token created: ', token);
-
             const data = {
                 user: { id: user.id, name: user.name, email: user.email },
                 token,
             };
 
-            console.error('user sent: ', data);
-
             return res.send(data).status(200);
         }
-        console.error('error data: ', user, req.body);
+
         return res.sendStatus(401);
     } catch (e) {
         console.error(e.error);

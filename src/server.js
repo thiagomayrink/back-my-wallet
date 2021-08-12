@@ -1,12 +1,10 @@
 import './setup.js';
 import app from './app.js';
 
-const port = process.env.PORT;
+const port = process.env.PORT || 4000;
 
 app.listen(port, () => {
     console.info(
-        `Server is listening on port ${port || 4000} and NODE_ENV: ${
-            process.env.NODE_ENV
-        }.`,
+        `Server is listening on port ${port} and NODE_ENV: ${process.env.NODE_ENV}.`,
     );
 });
