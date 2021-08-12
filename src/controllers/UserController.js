@@ -1,6 +1,5 @@
 import { UserService } from '../services/UserService';
 import { UserRepository } from '../repositories/UserRepository.js';
-import { ValidateUserAndPassword } from '../utils/validations.js';
 
 export class UserController {
     constructor() {
@@ -14,9 +13,8 @@ export class UserController {
 
             if (!name || !email || !password) return res.sendStatus(400);
 
-            const isExistingUser = await this.userService.checkExistingUser(
-                email,
-            );
+            // prettier-ignore
+            const isExistingUser = await this.userService.checkExistingUser(email);
 
             if (isExistingUser) {
                 return res.sendStatus(409);
@@ -39,17 +37,14 @@ export class UserController {
 
             if (!email || !password) return res.sendStatus(400);
 
-            const user = await this.userRepository.findUserByEmail(email);
+            // prettier-ignore
+            const user = await this.userService.validateSignInInputReturningUser(email, password);
 
             if (!user) return res.sendStatus(401);
 
-            const isValidPassword = ValidateUserAndPassword(password, user);
-
-            if (!isValidPassword) return res.sendStatus(401);
-
-            if (isValidPassword) {
-                const userData = await this.userService.signInUser(user);
-                return res.send(userData).status(200);
+            if (user) {
+                const sessionData = await this.userService.createSession(user);
+                return res.send(sessionData).status(200);
             }
             return res.sendStatus(400);
         } catch (err) {

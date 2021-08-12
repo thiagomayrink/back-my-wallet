@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { UserRepository } from '../repositories/UserRepository.js';
 import { SessionRepository } from '../repositories/SessionRepository.js';
+import { ValidateUserAndPassword } from '../utils/validations.js';
 
 export class UserService {
     constructor() {
@@ -28,13 +29,24 @@ export class UserService {
         try {
             const passwordHash = bcrypt.hashSync(password, 10);
             await this.userRepository.save(name, email, passwordHash);
+
             return true;
         } catch (err) {
             return console.error('userService.signUpUser: ', err);
         }
     }
 
-    async signInUser(user) {
+    async validateSignInInputReturningUser(email, password) {
+        const user = await this.userRepository.findUserByEmail(email);
+        if (!user) return false;
+
+        const isValidPassword = ValidateUserAndPassword(password, user);
+        if (isValidPassword) return user;
+
+        return false;
+    }
+
+    async createSession(user) {
         try {
             const token = uuidv4();
             await this.sessionRepository.save(user.id, token);
@@ -43,9 +55,10 @@ export class UserService {
                 user: { id: user.id, name: user.name, email: user.email },
                 token,
             };
+
             return userData;
         } catch (err) {
-            return console.error('userService.signInUser: ', err);
+            return console.error('userService.createSession: ', err);
         }
     }
 }
