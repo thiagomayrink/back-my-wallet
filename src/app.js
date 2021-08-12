@@ -3,43 +3,15 @@ import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import connection from './database/database.js';
+import { UserController } from './controllers/UserController.js';
 
+const userController = new UserController();
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-app.post('/sign-up', async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-        const { rows: users } = await connection.query(
-            'SELECT * FROM users WHERE email = $1',
-            [email],
-        );
-
-        if (users.length > 0) {
-            return res.sendStatus(409);
-        }
-
-        if (name && email && password) {
-            const passwordHash = bcrypt.hashSync(password, 10);
-            await connection.query(
-                `
-            INSERT INTO users
-            (name, email, password)
-            VALUES ($1, $2, $3)
-        `,
-                [name, email, passwordHash],
-            );
-        } else {
-            return res.sendStatus(400);
-        }
-
-        return res.sendStatus(201);
-    } catch (e) {
-        console.error(e.error);
-        return res.sendStatus(500);
-    }
-});
+app.post('/sign-up', userController.signUp.bind(userController));
 
 app.post('/sign-in', async (req, res) => {
     try {
