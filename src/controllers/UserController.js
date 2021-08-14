@@ -1,5 +1,6 @@
 import { UserService } from '../services/UserService';
 import { UserRepository } from '../repositories/UserRepository.js';
+import { fetchToken } from '../utils/utils';
 
 export class UserController {
     constructor() {
@@ -46,9 +47,31 @@ export class UserController {
                 const sessionData = await this.userService.createSession(user);
                 return res.send(sessionData).status(200);
             }
+
             return res.sendStatus(400);
         } catch (err) {
             console.error('userController.signIn: ', err);
+            return res.sendStatus(500);
+        }
+    }
+
+    async signOut(req, res) {
+        try {
+            const token = fetchToken(req.headers);
+
+            if (!token) {
+                return res.sendStatus(401);
+            }
+
+            const isSessionRemoved = await this.userService.removeSession(
+                token,
+            );
+
+            if (isSessionRemoved) return res.sendStatus(200);
+
+            return res.sendStatus(500);
+        } catch (e) {
+            console.error(e.error);
             return res.sendStatus(500);
         }
     }

@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { UserRepository } from '../repositories/UserRepository.js';
 import { SessionRepository } from '../repositories/SessionRepository.js';
-import { ValidateUserAndPassword } from '../utils/validations.js';
+import { ValidateUserAndPassword } from '../utils/utils.js';
 
 export class UserService {
     constructor() {
@@ -59,6 +59,15 @@ export class UserService {
             return userData;
         } catch (err) {
             return console.error('userService.createSession: ', err);
+        }
+    }
+
+    async removeSession(token) {
+        try {
+            const isSessionRemoved = await this.sessionRepository.end(token);
+            return isSessionRemoved || false;
+        } catch (e) {
+            return console.error(e.error);
         }
     }
 }

@@ -6,6 +6,7 @@
     "main": "index.js",
     "scripts": {
         "prettier": "npx prettier --write --ignore-unknown .",
+        "eslint": "npx eslint --fix src --ext .js && npx eslint --fix tests --ext .js",
         "start": "NODE_ENV=production node ./src/server.js",
         "test": "NODE_ENV=test npx jest -i --verbose",
         "dev": "NODE_ENV=development npx nodemon ./src/server.js"

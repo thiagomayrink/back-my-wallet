@@ -14,8 +14,7 @@ export class UserRepository {
 
             return users[0];
         } catch (err) {
-            console.error('userRepository.findUserByEmail: ', err);
-            return null;
+            return console.error('userRepository.findUserByEmail: ', err);
         }
     }
 
@@ -32,8 +31,7 @@ export class UserRepository {
 
             return true;
         } catch (err) {
-            console.error('userRepository.save: ', err);
-            return null;
+            return console.error('userRepository.save: ', err);
         }
     }
 }

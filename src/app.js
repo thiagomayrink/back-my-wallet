@@ -13,6 +13,8 @@ app.post('/sign-up', userController.signUp.bind(userController));
 
 app.post('/sign-in', userController.signIn.bind(userController));
 
+app.post('/sign-out', userController.signOut.bind(userController));
+
 app.post('/transactions', async (req, res) => {
     try {
         const { authorization } = req.headers;
@@ -146,37 +148,6 @@ app.get('/balance', async (req, res) => {
         }
         const data = { balance };
         return res.send(data).status(200);
-    } catch (e) {
-        console.error(e.error);
-        return res.sendStatus(500);
-    }
-});
-
-app.post('/sign-out', async (req, res) => {
-    try {
-        const { authorization } = req.headers;
-        const token = authorization?.replace('Bearer ', '');
-        if (!authorization || !token) {
-            return res.sendStatus(401);
-        }
-        const { rows: user } = await connection.query(
-            `
-            SELECT * FROM sessions
-            JOIN users
-            ON sessions."userId" = users.id
-            WHERE sessions.token = $1
-        `,
-            [token],
-        );
-
-        await connection.query(
-            `
-            DELETE FROM sessions
-            WHERE "userId" = $1
-        `,
-            [user[0].id],
-        );
-        return res.sendStatus(200);
     } catch (e) {
         console.error(e.error);
         return res.sendStatus(500);

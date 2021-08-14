@@ -10,3 +10,9 @@ export function ValidateUserAndPassword(password, user) {
         return console.error('validatePassword: ', err);
     }
 }
+
+export function fetchToken(headers) {
+    const { authorization } = headers;
+    const token = authorization?.trim().replace('Bearer', '');
+    return token;
+}

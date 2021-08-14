@@ -4,7 +4,7 @@ import { afterAll, beforeEach } from '@jest/globals';
 import app from '../../src/app.js';
 
 import { createUser } from '../factories/userFactory.js';
-import { cleanDatabase, closeConnection } from '../utils/util.js';
+import { cleanDatabase, closeConnection, createToken } from '../utils/util.js';
 
 const agent = supertest(app);
 
@@ -42,7 +42,7 @@ describe('POST /sign-in', () => {
     it('should respond with status 200 for a valid login input', async () => {
         const response = await agent
             .post('/sign-in')
-            .send({ email: 'test@email.com', password: '123456' });
+            .send({ email: signBody.email, password: signBody.password });
 
         expect(response.status).toBe(200);
     });
@@ -50,7 +50,7 @@ describe('POST /sign-in', () => {
     it('should return a token for valid login session', async () => {
         const response = await agent
             .post('/sign-in')
-            .send({ email: 'test@email.com', password: '123456' });
+            .send({ email: signBody.email, password: signBody.password });
 
         expect(response.body).toEqual(
             expect.objectContaining({
@@ -72,6 +72,34 @@ describe('POST /sign-in', () => {
             email: 'not_registered_email@email.com',
             password: signBody.password,
         });
+
+        expect(response.status).toBe(401);
+    });
+});
+
+describe('POST /sign-out', () => {
+    it('should respond with status 200 for valid token', async () => {
+        await cleanDatabase();
+
+        const token = await createToken(
+            signBody.name,
+            signBody.email,
+            signBody.password,
+        );
+
+        const response = await agent
+            .post('/sign-out')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+    });
+
+    it('should respond with status 401 for empty token', async () => {
+        const token = '';
+
+        const response = await agent
+            .post('/sign-out')
+            .set('Authorization', `Bearer ${token}`);
 
         expect(response.status).toBe(401);
     });
