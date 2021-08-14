@@ -1,4 +1,4 @@
-import connection from '../database/database';
+import connection from '../database/database.js';
 
 export class UserRepository {
     constructor() {
@@ -15,6 +15,24 @@ export class UserRepository {
             return users[0];
         } catch (err) {
             return console.error('userRepository.findUserByEmail: ', err);
+        }
+    }
+
+    async findUserByToken(token) {
+        try {
+            const { rows: user } = await this.connection.query(
+                `
+                SELECT * FROM sessions
+                JOIN users
+                ON sessions."userId" = users.id
+                WHERE sessions.token = $1
+            `,
+                [token],
+            );
+
+            return user[0];
+        } catch (err) {
+            return console.error('userRepository.findUserByToken: ', err);
         }
     }
 

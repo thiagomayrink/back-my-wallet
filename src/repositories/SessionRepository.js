@@ -1,4 +1,4 @@
-import connection from '../database/database';
+import connection from '../database/database.js';
 
 export class SessionRepository {
     constructor() {
@@ -39,24 +39,14 @@ export class SessionRepository {
     }
 
     // to be implemented in next feature
-    async endAll(token) {
+    async endAll(userId) {
         try {
-            const { rows: user } = await this.connection.query(
-                `
-                    SELECT * FROM sessions
-                    JOIN users
-                    ON sessions."userId" = users.id
-                    WHERE sessions.token = $1
-                `,
-                [token],
-            );
-
             await this.connection.query(
                 `
                     DELETE FROM sessions
                     WHERE "userId" = $1
                 `,
-                [user[0].id],
+                [userId],
             );
 
             return true;

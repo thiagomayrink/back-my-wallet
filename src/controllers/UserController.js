@@ -1,6 +1,6 @@
-import { UserService } from '../services/UserService';
+import { UserService } from '../services/UserService.js';
 import { UserRepository } from '../repositories/UserRepository.js';
-import { fetchToken } from '../utils/utils';
+import { fetchToken } from '../utils/utils.js';
 
 export class UserController {
     constructor() {
@@ -15,7 +15,7 @@ export class UserController {
             if (!name || !email || !password) return res.sendStatus(400);
 
             // prettier-ignore
-            const isExistingUser = await this.userService.checkExistingUser(email);
+            const isExistingUser = await this.userService.checkExistingEmail(email);
 
             if (isExistingUser) {
                 return res.sendStatus(409);
@@ -70,8 +70,8 @@ export class UserController {
             if (isSessionRemoved) return res.sendStatus(200);
 
             return res.sendStatus(500);
-        } catch (e) {
-            console.error(e.error);
+        } catch (err) {
+            console.error(err);
             return res.sendStatus(500);
         }
     }
