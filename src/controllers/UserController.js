@@ -1,6 +1,5 @@
 import { UserService } from '../services/UserService.js';
 import { UserRepository } from '../repositories/UserRepository.js';
-import { fetchToken } from '../utils/utils.js';
 
 export class UserController {
     constructor() {
@@ -69,8 +68,7 @@ export class UserController {
 
     async signOut(req, res) {
         try {
-            const token = fetchToken(req.headers);
-            if (!token) return res.sendStatus(401);
+            const { token } = res.locals.session;
 
             const isSessionRemoved = await this.userService.removeSession(
                 token,

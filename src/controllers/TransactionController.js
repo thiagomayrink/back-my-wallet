@@ -1,6 +1,5 @@
 import { TransactionService } from '../services/TransactionService.js';
 import { UserService } from '../services/UserService.js';
-import { fetchToken } from '../utils/utils.js';
 
 export class TransactionController {
     constructor() {
@@ -10,8 +9,8 @@ export class TransactionController {
 
     async perform(req, res) {
         try {
-            const token = fetchToken(req.headers);
-            if (!token) return res.sendStatus(401);
+            const { user } = res.locals.session;
+
             // prettier-ignore
             const sanitizedInput = this.transactionService.sanitizeTransactionBody(
                 req.body,
@@ -22,9 +21,6 @@ export class TransactionController {
             } = this.transactionService.validateTransactionInput(sanitizedInput);
 
             if (err) return res.sendStatus(400);
-
-            const user = await this.userService.returnUserFromToken(token);
-            if (!user) return res.sendStatus(401);
 
             const transaction = {
                 userId: user.id,
@@ -47,11 +43,7 @@ export class TransactionController {
 
     async getAll(req, res) {
         try {
-            const token = fetchToken(req.headers);
-            if (!token) return res.sendStatus(401);
-
-            const user = await this.userService.returnUserFromToken(token);
-            if (!user) return res.sendStatus(401);
+            const { user } = res.locals.session;
 
             const transactions = await this.transactionService.fetch(user.id);
 
@@ -64,11 +56,7 @@ export class TransactionController {
 
     async balance(req, res) {
         try {
-            const token = fetchToken(req.headers);
-            if (!token) return res.sendStatus(401);
-
-            const user = await this.userService.returnUserFromToken(token);
-            if (!user) return res.sendStatus(401);
+            const { user } = res.locals.session;
 
             const transactions = await this.transactionService.fetch(user.id);
 
