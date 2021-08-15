@@ -1,13 +1,61 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { stripHtml } from 'string-strip-html';
 import { UserRepository } from '../repositories/UserRepository.js';
 import { SessionRepository } from '../repositories/SessionRepository.js';
 import { validateUserAndPassword } from '../utils/utils.js';
+import { signInSchema, signUpSchema } from '../schemas/userSchema.js';
 
 export class UserService {
     constructor() {
         this.userRepository = new UserRepository();
         this.sessionRepository = new SessionRepository();
+        this.sanitizeSignUpBody = function sanitizeSignUpBody(reqBody) {
+            let { name, email, password } = reqBody;
+
+            name = stripHtml(name).result.trim();
+            email = stripHtml(email).result.trim();
+            password = stripHtml(password).result.trim();
+
+            return { name, email, password };
+        };
+        this.validateSignUpInput = function validateSignUpInput(
+            sanitizedInput,
+        ) {
+            const err = signUpSchema.validate(sanitizedInput).error || null;
+            const { name, email, password } = sanitizedInput;
+
+            const validatedBody = {
+                name,
+                email,
+                password,
+                err,
+            };
+
+            return validatedBody;
+        };
+        this.sanitizeSignInBody = function sanitizeSignInBody(reqBody) {
+            let { email, password } = reqBody;
+
+            email = stripHtml(email).result.trim();
+            password = stripHtml(password).result.trim();
+
+            return { email, password };
+        };
+        this.validateSignInInput = function validateSignInInput(
+            sanitizedInput,
+        ) {
+            const err = signInSchema.validate(sanitizedInput).error || null;
+            const { email, password } = sanitizedInput;
+
+            const validatedBody = {
+                email,
+                password,
+                err,
+            };
+
+            return validatedBody;
+        };
     }
 
     async checkExistingEmail(email) {

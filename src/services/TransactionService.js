@@ -1,10 +1,39 @@
-import { TransactionRepository } from '../repositories/TransactionRepository';
-import { UserRepository } from '../repositories/UserRepository';
+import { stripHtml } from 'string-strip-html';
+import { TransactionRepository } from '../repositories/TransactionRepository.js';
+import { UserRepository } from '../repositories/UserRepository.js';
+import { transactionSchema } from '../schemas/transactionSchema.js';
 
 export class TransactionService {
     constructor() {
         this.transactionsRepository = new TransactionRepository();
         this.userRepository = new UserRepository();
+        this.sanitizeTransactionBody = function sanitizeTransactionBody(
+            reqBody,
+        ) {
+            const { type, amount } = reqBody;
+            let { description } = reqBody;
+            description = stripHtml(description).result.trim();
+
+            return { type, amount, description };
+        };
+
+        this.validateTransactionInput = function validateTransactionInput(
+            sanitizedInput,
+        ) {
+            // prettier-ignore
+            const err = transactionSchema.validate(sanitizedInput).error || null;
+            const { type, amount, description } = sanitizedInput;
+
+            const validatedBody = {
+                type,
+                amount,
+                description,
+                err,
+            };
+
+            return validatedBody;
+        };
+
         this.evaluateBalance = function evaluateBalance(transactions) {
             try {
                 let balance = 0;

@@ -1,6 +1,6 @@
-import { TransactionService } from '../services/TransactionService';
-import { UserService } from '../services/UserService';
-import { fetchToken } from '../utils/utils';
+import { TransactionService } from '../services/TransactionService.js';
+import { UserService } from '../services/UserService.js';
+import { fetchToken } from '../utils/utils.js';
 
 export class TransactionController {
     constructor() {
@@ -12,14 +12,18 @@ export class TransactionController {
         try {
             const token = fetchToken(req.headers);
             if (!token) return res.sendStatus(401);
+            // prettier-ignore
+            const sanitizedInput = this.transactionService.sanitizeTransactionBody(
+                req.body,
+            );
+            // prettier-ignore
+            const {
+                type, amount, description, err,
+            } = this.transactionService.validateTransactionInput(sanitizedInput);
 
-            const { type, amount, description } = req.body;
-
-            if (type !== 0 && type !== 1) return res.sendStatus(400);
-            if (!amount) return res.sendStatus(400);
+            if (err) return res.sendStatus(400);
 
             const user = await this.userService.returnUserFromToken(token);
-
             if (!user) return res.sendStatus(401);
 
             const transaction = {
@@ -47,7 +51,6 @@ export class TransactionController {
             if (!token) return res.sendStatus(401);
 
             const user = await this.userService.returnUserFromToken(token);
-
             if (!user) return res.sendStatus(401);
 
             const transactions = await this.transactionService.fetch(user.id);
@@ -65,7 +68,6 @@ export class TransactionController {
             if (!token) return res.sendStatus(401);
 
             const user = await this.userService.returnUserFromToken(token);
-
             if (!user) return res.sendStatus(401);
 
             const transactions = await this.transactionService.fetch(user.id);

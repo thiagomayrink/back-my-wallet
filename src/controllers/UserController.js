@@ -10,9 +10,15 @@ export class UserController {
 
     async signUp(req, res) {
         try {
-            const { name, email, password } = req.body;
+            const sanitizedInput = this.userService.sanitizeSignUpBody(
+                req.body,
+            );
+            // prettier-ignore
+            const {
+                name, email, password, err,
+            } = this.userService.validateSignUpInput(sanitizedInput);
 
-            if (!name || !email || !password) return res.sendStatus(400);
+            if (err) return res.sendStatus(400);
 
             // prettier-ignore
             const isExistingUser = await this.userService.checkExistingEmail(email);
@@ -25,6 +31,7 @@ export class UserController {
                 await this.userService.signUpUser(name, email, password);
                 return res.sendStatus(201);
             }
+
             return res.sendStatus(400);
         } catch (err) {
             console.error('userController.signUp: ', err);
@@ -34,13 +41,18 @@ export class UserController {
 
     async signIn(req, res) {
         try {
-            const { email, password } = req.body;
+            const sanitizedInput = this.userService.sanitizeSignInBody(
+                req.body,
+            );
+            // prettier-ignore
+            const {
+                email, password, err,
+            } = this.userService.validateSignInInput(sanitizedInput);
 
-            if (!email || !password) return res.sendStatus(400);
+            if (err) return res.sendStatus(401);
 
             // prettier-ignore
             const user = await this.userService.validateSignInInputReturningUser(email, password);
-
             if (!user) return res.sendStatus(401);
 
             if (user) {
@@ -58,15 +70,11 @@ export class UserController {
     async signOut(req, res) {
         try {
             const token = fetchToken(req.headers);
-
-            if (!token) {
-                return res.sendStatus(401);
-            }
+            if (!token) return res.sendStatus(401);
 
             const isSessionRemoved = await this.userService.removeSession(
                 token,
             );
-
             if (isSessionRemoved) return res.sendStatus(200);
 
             return res.sendStatus(500);
