@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
 
-export function validateUserAndPassword(password, user) {
+export function validateUserPassword(password, userPassword) {
     try {
-        if (user && bcrypt.compareSync(password, user.password)) {
+        if (bcrypt.compareSync(password, userPassword)) {
             return true;
         }
         return false;

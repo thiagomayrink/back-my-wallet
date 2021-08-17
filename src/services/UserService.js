@@ -1,61 +1,14 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { stripHtml } from 'string-strip-html';
 import { UserRepository } from '../repositories/UserRepository.js';
 import { SessionRepository } from '../repositories/SessionRepository.js';
-import { validateUserAndPassword } from '../utils/utils.js';
+import { validateUserPassword } from '../utils/utils.js';
 import { signInSchema, signUpSchema } from '../schemas/userSchema.js';
 
 export class UserService {
     constructor() {
         this.userRepository = new UserRepository();
         this.sessionRepository = new SessionRepository();
-        this.sanitizeSignUpBody = function sanitizeSignUpBody(reqBody) {
-            let { name, email, password } = reqBody;
-
-            name = stripHtml(name).result.trim();
-            email = stripHtml(email).result.trim();
-            password = stripHtml(password).result.trim();
-
-            return { name, email, password };
-        };
-        this.validateSignUpInput = function validateSignUpInput(
-            sanitizedInput,
-        ) {
-            const err = signUpSchema.validate(sanitizedInput).error || null;
-            const { name, email, password } = sanitizedInput;
-
-            const validatedBody = {
-                name,
-                email,
-                password,
-                err,
-            };
-
-            return validatedBody;
-        };
-        this.sanitizeSignInBody = function sanitizeSignInBody(reqBody) {
-            let { email, password } = reqBody;
-
-            email = stripHtml(email).result.trim();
-            password = stripHtml(password).result.trim();
-
-            return { email, password };
-        };
-        this.validateSignInInput = function validateSignInInput(
-            sanitizedInput,
-        ) {
-            const err = signInSchema.validate(sanitizedInput).error || null;
-            const { email, password } = sanitizedInput;
-
-            const validatedBody = {
-                email,
-                password,
-                err,
-            };
-
-            return validatedBody;
-        };
     }
 
     async checkExistingEmail(email) {
@@ -73,25 +26,73 @@ export class UserService {
         }
     }
 
-    async signUpUser(name, email, password) {
+    async signUpUser(reqBody) {
         try {
-            const passwordHash = bcrypt.hashSync(password, 10);
-            await this.userRepository.save(name, email, passwordHash);
+            const status = {};
+            // prettier-ignore
+            const {
+                name,
+                email,
+                password,
+                err,
+            } = UserService.validateSignUpInput(reqBody);
+            if (err) {
+                status.code = 400;
+                return status;
+            }
+            const isExistingUser = await this.checkExistingEmail(reqBody.email);
+            if (isExistingUser) {
+                status.code = 409;
+                return status;
+            }
 
-            return true;
+            const passwordHash = bcrypt.hashSync(password, 10);
+            const isSaved = await this.userRepository.save(
+                name,
+                email,
+                passwordHash,
+            );
+            if (isSaved) {
+                status.code = 201;
+                return status;
+            }
+
+            status.code = 400;
+            return status;
         } catch (err) {
             return console.error('userService.signUpUser: ', err);
         }
     }
 
-    async validateSignInInputReturningUser(email, password) {
+    async signInUser(reqBody) {
+        const status = {};
+        // prettier-ignore
+        const {
+            email,
+            password,
+            err,
+        } = UserService.validateSignInInput(reqBody);
+
+        if (err) {
+            status.code = 401;
+            return status;
+        }
         const user = await this.userRepository.findUserByEmail(email);
-        if (!user) return false;
+        if (!user) {
+            status.code = 401;
+            return status;
+        }
 
-        const isValidPassword = validateUserAndPassword(password, user);
-        if (isValidPassword) return user;
+        const isValidPassword = validateUserPassword(password, user.password);
+        if (isValidPassword) {
+            const sessionData = await this.createSession(user);
+            status.code = 200;
+            status.session = sessionData;
+            return status;
+        }
 
-        return null;
+        status.code = 401;
+        return status;
     }
 
     async returnUserFromToken(token) {
@@ -124,5 +125,32 @@ export class UserService {
         } catch (err) {
             return console.error(err);
         }
+    }
+
+    static validateSignUpInput(reqBody) {
+        const err = signUpSchema.validate(reqBody).error || false;
+        const { name, email, password } = reqBody;
+
+        const validatedBody = {
+            name,
+            email,
+            password,
+            err,
+        };
+
+        return validatedBody;
+    }
+
+    static validateSignInInput(reqBody) {
+        const err = signInSchema.validate(reqBody).error || false;
+        const { email, password } = reqBody;
+
+        const validatedBody = {
+            email,
+            password,
+            err,
+        };
+
+        return validatedBody;
     }
 }
