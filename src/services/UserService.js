@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 import { UserRepository } from '../repositories/UserRepository.js';
 import { SessionRepository } from '../repositories/SessionRepository.js';
 import { validateUserPassword } from '../utils/utils.js';
@@ -27,15 +27,13 @@ export class UserService {
     }
 
     async signUpUser(reqBody) {
+        const status = {};
         try {
-            const status = {};
             // prettier-ignore
             const {
-                name,
-                email,
-                password,
-                err,
+                name, email, password, err,
             } = UserService.validateSignUpInput(reqBody);
+
             if (err) {
                 status.code = 400;
                 return status;
@@ -60,7 +58,10 @@ export class UserService {
             status.code = 400;
             return status;
         } catch (err) {
-            return console.error('userService.signUpUser: ', err);
+            console.error('userService.signUpUser: ', err);
+            status.code = 500;
+            status.message = 'Internal Server Error';
+            return status;
         }
     }
 
@@ -86,6 +87,10 @@ export class UserService {
         const isValidPassword = validateUserPassword(password, user.password);
         if (isValidPassword) {
             const sessionData = await this.createSession(user);
+            if (!sessionData) {
+                status.code = 500;
+                return status;
+            }
             status.code = 200;
             status.session = sessionData;
             return status;
@@ -95,35 +100,51 @@ export class UserService {
         return status;
     }
 
-    async returnUserFromToken(token) {
-        const user = await this.userRepository.findUserByToken(token);
-        if (user) return user;
+    // async returnUserFromToken(token) {
+    //     const user = await this.userRepository.findUserByToken(token);
+    //     if (user) return user;
 
-        return null;
-    }
+    //     return null;
+    // }
 
     async createSession(user) {
         try {
-            const token = uuidv4();
+            const data = { userId: user.id };
+            const secret = process.env.JWT_SECRET;
+            const config = { expiresIn: 60 * 60 * 24 }; // 1 dia em segundos
+
+            const token = jwt.sign(data, secret, config);
             await this.sessionRepository.save(user.id, token);
 
             const userData = {
-                user: { id: user.id, name: user.name, email: user.email },
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                },
                 token,
             };
-
             return userData;
         } catch (err) {
-            return console.error('userService.createSession: ', err);
+            console.error('userService.createSession: ', err);
+            return null;
         }
     }
 
     async removeSession(token) {
+        const status = {};
         try {
             const isSessionRemoved = await this.sessionRepository.end(token);
-            return isSessionRemoved || false;
+            if (isSessionRemoved) {
+                status.code = 200;
+                return status;
+            }
+            status.core = 401;
+            return status;
         } catch (err) {
-            return console.error(err);
+            console.error('removeSession: ', err);
+            status.core = 500;
+            return status;
         }
     }
 

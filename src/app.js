@@ -42,7 +42,7 @@ app.get(
     '/transactions',
     sanitizingMiddleware,
     authMiddleware,
-    transactionController.getAll.bind(transactionController),
+    transactionController.returnAll.bind(transactionController),
 );
 
 app.get(

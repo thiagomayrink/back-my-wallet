@@ -22,6 +22,6 @@ export function sanitizingMiddleware(req, res, next) {
         return next();
     } catch (err) {
         console.error('authMiddleware: ', err);
-        return res.sendStatus(500);
+        return res.sendStatus(500).end();
     }
 }

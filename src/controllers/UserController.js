@@ -11,14 +11,14 @@ export class UserController {
             const sanitizedBody = req.body;
             const status = await this.userService.signUpUser(sanitizedBody);
 
-            if (status.code === 400) return res.sendStatus(400);
-            if (status.code === 409) return res.sendStatus(409);
-            if (status.code === 201) return res.sendStatus(201);
+            if (status.code === 400) return res.sendStatus(400).end();
+            if (status.code === 409) return res.sendStatus(409).end();
+            if (status.code === 201) return res.sendStatus(201).end();
 
-            return res.sendStatus(400);
+            return res.sendStatus(400).end();
         } catch (err) {
             console.error('userController.signUp: ', err);
-            return res.sendStatus(500);
+            return res.sendStatus(500).end();
         }
     }
 
@@ -26,30 +26,28 @@ export class UserController {
         try {
             const sanitizedBody = req.body;
             const status = await this.userService.signInUser(sanitizedBody);
-            if (status.code === 401) return res.sendStatus(401);
+            if (status.code === 401) return res.sendStatus(401).end();
             // prettier-ignore
-            if (status.code === 200) return res.send(status.session).status(200);
+            if (status.code === 200) return res.send(status.session).status(200).end();
 
-            return res.sendStatus(400);
+            return res.sendStatus(400).end();
         } catch (err) {
             console.error('userController.signIn: ', err);
-            return res.sendStatus(500);
+            return res.sendStatus(500).end();
         }
     }
 
     async signOut(req, res) {
         try {
-            const { token } = res.locals.session;
+            const { token } = req.token;
 
-            const isSessionRemoved = await this.userService.removeSession(
-                token,
-            );
-            if (isSessionRemoved) return res.sendStatus(200);
+            const status = await this.userService.removeSession(token);
+            if (status.code === 200) return res.sendStatus(200).end();
 
-            return res.sendStatus(500);
+            return res.sendStatus(status.code).end();
         } catch (err) {
             console.error(err);
-            return res.sendStatus(500);
+            return res.sendStatus(500).end();
         }
     }
 }

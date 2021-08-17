@@ -34,7 +34,8 @@ export class SessionRepository {
 
             return true;
         } catch (err) {
-            return console.error('userRepository.end: ', err);
+            console.error('userRepository.end: ', err);
+            return false;
         }
     }
 

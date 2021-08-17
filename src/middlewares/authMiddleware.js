@@ -1,20 +1,27 @@
-import { UserService } from '../services/UserService.js';
+import jwt from 'jsonwebtoken';
 import { fetchToken } from '../utils/utils.js';
 
-// fazer token com jwt! buscar userId do token!
 export async function authMiddleware(req, res, next) {
-    const userService = new UserService();
     try {
+        const secret = process.env.JWT_SECRET;
+        const user = {};
+
         const token = fetchToken(req.headers);
-        if (!token) return res.sendStatus(401);
+        if (!token) return res.sendStatus(401).end();
+        try {
+            const data = jwt.verify(token, secret);
+            user.id = data.userId;
+        } catch {
+            return res.sendStatus(401).end();
+        }
+        if (!user.id) return res.sendStatus(401).end();
 
-        const user = await userService.returnUserFromToken(token);
-        if (!user) return res.sendStatus(401);
+        req.userId = user.id;
+        req.token = token;
 
-        res.locals.session = { user, token };
         return next();
     } catch (err) {
         console.error('authMiddleware: ', err);
-        return res.sendStatus(500);
+        return res.sendStatus(500).end();
     }
 }

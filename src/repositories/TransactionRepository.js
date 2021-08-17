@@ -6,19 +6,25 @@ export class TransactionRepository {
     }
 
     async save(transaction) {
-        await this.connection.query(
-            `
-                INSERT INTO transactions 
-                ("userId", amount, description, type, date)
-                VALUES ($1, $2, $3, $4, NOW())
-        `,
-            [
-                transaction.userId,
-                transaction.amount,
-                transaction.description,
-                transaction.type,
-            ],
-        );
+        try {
+            await this.connection.query(
+                `
+                    INSERT INTO transactions 
+                    ("userId", amount, description, type, date)
+                    VALUES ($1, $2, $3, $4, NOW())
+            `,
+                [
+                    transaction.userId,
+                    transaction.amount,
+                    transaction.description,
+                    transaction.type,
+                ],
+            );
+            return true;
+        } catch (err) {
+            console.error('transactionRepository.save: ', err);
+            return false;
+        }
     }
 
     async findAllByUserId(userId) {
@@ -33,7 +39,8 @@ export class TransactionRepository {
 
             return transactions;
         } catch (err) {
-            return console.error(err);
+            console.error(err);
+            return null;
         }
     }
 }

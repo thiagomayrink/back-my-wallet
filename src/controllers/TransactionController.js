@@ -9,63 +9,48 @@ export class TransactionController {
 
     async perform(req, res) {
         try {
-            const { user } = res.locals.session;
+            const sanitizedBody = req.body;
 
-            // prettier-ignore
-            const sanitizedInput = this.transactionService.sanitizeTransactionBody(
-                req.body,
-            );
-            // prettier-ignore
-            const {
-                type, amount, description, err,
-            } = this.transactionService.validateTransactionInput(sanitizedInput);
-
-            if (err) return res.sendStatus(400);
-
-            const transaction = {
-                userId: user.id,
-                amount,
-                description,
-                type,
-            };
-
-            const isProcessed = await this.transactionService.process(
-                transaction,
+            const status = await this.transactionService.process(
+                sanitizedBody,
+                req.userId,
             );
 
-            if (isProcessed) return res.sendStatus(201);
-            return res.sendStatus(400);
+            if (status.code === 400) return res.sendStatus(400).end();
+            if (status.code === 201) return res.sendStatus(201).end();
+
+            return res.sendStatus(status.code).end();
         } catch (err) {
             console.error(err);
-            return res.sendStatus(500);
+            return res.sendStatus(500).end();
         }
     }
 
-    async getAll(req, res) {
+    async returnAll(req, res) {
         try {
-            const { user } = res.locals.session;
+            const status = await this.transactionService.fetch(req.userId);
 
-            const transactions = await this.transactionService.fetch(user.id);
-
-            return res.send(transactions);
+            if (status.transactions !== null) {
+                return res.send(status.transactions).end();
+            }
+            return res.sendStatus(status.code).end();
         } catch (err) {
             console.error(err);
-            return res.sendStatus(500);
+            return res.sendStatus(500).end();
         }
     }
 
     async balance(req, res) {
         try {
-            const { user } = res.locals.session;
+            const status = await this.transactionService.doBalance(req.userId);
 
-            const transactions = await this.transactionService.fetch(user.id);
-
-            const balance = this.transactionService.doBalance(transactions);
-
-            return res.send({ balance }).status(200);
+            if (status.code === 200) {
+                return res.send({ balance: status.balance }).status(200).end();
+            }
+            return res.sendStatus(status.code).end();
         } catch (err) {
             console.error(err);
-            return res.sendStatus(500);
+            return res.sendStatus(500).end();
         }
     }
 }

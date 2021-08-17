@@ -22,11 +22,11 @@ export class UserRepository {
         try {
             const { rows: user } = await this.connection.query(
                 `
-                SELECT * FROM sessions
-                JOIN users
-                ON sessions."userId" = users.id
-                WHERE sessions.token = $1
-            `,
+                    SELECT * FROM sessions
+                    JOIN users
+                    ON sessions."userId" = users.id
+                    WHERE sessions.token = $1
+                `,
                 [token],
             );
 
@@ -40,10 +40,10 @@ export class UserRepository {
         try {
             await this.connection.query(
                 `
-                INSERT INTO users
-                (name, email, password)
-                VALUES ($1, $2, $3)
-            `,
+                    INSERT INTO users
+                    (name, email, password)
+                    VALUES ($1, $2, $3)
+                `,
                 [name, email, passwordHash],
             );
 
