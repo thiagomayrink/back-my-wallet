@@ -48,8 +48,8 @@ npm i
 npm run dev
 ```
 
-7. Finally access http://localhost:4000/routename replacing 'routename' with the route you would like to try.
-Additionaly you can try the front-end deploy on vercel already integrated with the back-end deploy on heroku: [my-wallet-app][my-wallet-app]
+7. Finally, you can consume the API sending requests to http://localhost:4000/route replacing route with the desired route.
+Additionaly you can try the front-end deploy on vercel, integrated with the back-end deploy on heroku: [my-wallet-app][my-wallet-app]
 
 [my-wallet-app]:https://my-wallet-dun.vercel.app
 [my-wallet-api]:https://my-wallet-ap1.herokuapp.com/
