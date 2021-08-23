@@ -33,23 +33,25 @@ The following tools and frameworks were used in the construction of the project:
 ## How to run
 
 1. Clone this repository
-2. create a postgres Database named mywallet (for Jest tests: mywallet_test)
-3. copy database from dump.sql file in root/dataFiles (optional: you'll find aditional scripts to create and delete database in ./scripts)
-4. create a .env with your database connection URL, Port and JWT Secret before running your server (example file in root)
-5. Install dependencies
+2. You can clone the front-end repository at [My Wallet][my-wallet]
+3. Create a postgres Database named mywallet (for Jest tests: mywallet_test)
+4. Copy database from dump.sql file in root/dataFiles (optional: you'll find aditional scripts to create and delete database in ./scripts)
+5. Create a .env with your database connection URL, Port and JWT Secret before running your server (example file in root)
+6. Install dependencies
 
 ```bash
 npm i
 ```
 
-6. start server with
+7. Start server with
 
 ```
 npm run dev
 ```
 
-7. Finally, you can consume the API sending requests to http://localhost:4000/route replacing route with the desired route.
+8. Finally, you can consume the API sending requests to http://localhost:4000/route replacing route with the desired route.
 Additionaly you can try the front-end deploy on vercel, integrated with the back-end deploy on heroku: [my-wallet-app][my-wallet-app]
 
 [my-wallet-app]:https://my-wallet-dun.vercel.app
 [my-wallet-api]:https://my-wallet-ap1.herokuapp.com/
+[my-wallet]:https://github.com/thiagomayrink/my-wallet
